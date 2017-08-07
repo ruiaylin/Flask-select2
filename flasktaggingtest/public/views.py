@@ -8,7 +8,7 @@ from flask import (
     redirect, session)
 
 from flasktaggingtest.utils import flash_errors
-from flasktaggingtest.public.forms import TaggingForm
+from flasktaggingtest.public.forms import TaggingForm, TagDBForm
 
 blueprint = Blueprint('public', __name__, static_folder="../static")
 
@@ -23,7 +23,6 @@ def get_tags_choices():
     # tags_choices_all = [(str(o.id), o.title) for o in Tag.query
     #     .all()]
     # For session-storage example, is like this:
-    session['tags'] = []
     tags_choices_all = [
         (str(id), title)
         for id, title in enumerate(session.get('tags', [])) if id]
@@ -59,6 +58,18 @@ def home():
 
     print '-------------------end----------------'
     return render_template("public/home.html", form=form)
+
+
+@blueprint.route("/home1")
+def home1():
+    form = TagDBForm(request.form)
+
+    # Make the new default values take effect - see:
+    # http://stackoverflow.com/a/5519971/2066849
+    form.tags_field.process(request.form)
+
+    print '-------------------end----------------'
+    return render_template("public/home1.html", form=form)
 
 
 @blueprint.route("/save-tags/", methods=["POST"])
@@ -100,7 +111,7 @@ def save_tags():
             for v in form.tags_field.data:
                 try:
                     tag_id = int(v)
-                    tags_ids.append(v)
+                    tags_ids.append(tag_id)
                 except ValueError:
                     pass
 
@@ -167,5 +178,16 @@ def save_tags():
     else:
         flash_errors(form)
 
+    print '-------------------end tags----------------'
+    return redirect(url_for("public.home"))
+
+
+@blueprint.route("/save-tags1/", methods=["POST"])
+def save_tags1():
+    print '-------------------save tags----------------'
+    form = TaggingForm(request.form)
+    print 'form.tags_field.data: ', form.tags_field.data
+    tags_choices = form.tags_field.choices
+    print 'tags_choices: ', tags_choices
     print '-------------------end tags----------------'
     return redirect(url_for("public.home"))
